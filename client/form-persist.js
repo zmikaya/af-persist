@@ -28,7 +28,7 @@ class FormPersist {
     try {
       await this.db.upsert(
         docId,
-        () => ({ ...doc.insertDoc, updatedOn: new Date() }),
+        () => ({ ...doc.insertDoc, _id: docId, updatedAt: new Date() }),
       );
     } catch (e) {
       //

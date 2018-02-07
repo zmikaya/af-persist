@@ -1,8 +1,6 @@
-﻿
+﻿# AutoForm Persist
 
-# AutoForm Persist
-
-This set of modules is designed to enhance Meteor AutoForm. It wraps an existing AutoForm and creates a local store using PouchDB in order to establish local persistence.
+This set of modules is designed to enhance Meteor AutoForm. It wraps an AutoForm component and creates a local store using PouchDB in order to establish local persistence.
 
 ## Getting Started
 
@@ -13,16 +11,15 @@ Since this is not an NPM package currently, you will need to manually install a 
 meteor npm install --save pouchdb-browser pouchdb-upsert underscore
 ```
 ```
-meteor add session
+meteor add reactive-var session
 ```
 
 ### Usage
 
-The AutoFormPersist module can wrap an AutoForm quickForm and has a signature as follows:
+Use the autoFormPersist component as follows:
 
 ```
-// The docId should only be added for type='update' forms.
-AutoFormPersist(template, formId, collection, [docId]);
+{{#autoFormPersist atts}}<body content>{{/autoFormPersist}}
 ```
 
 Some examples are below.
@@ -30,33 +27,30 @@ Some examples are below.
 Example 1: Insert quickForm
 ```
 <template name="insertForm">
-  {{> quickForm
+  {{#autoFormPersist
     collection=collection
     doc=doc
     id="insertForm"
-    omitFields=omitFields
     type="insert"
   }}
+	  {{> afQuickField name="name"  placeholder="Name"}}
+  {{/autoFormPersist}}
 </template>
-
-AutoFormPersist(Template.insertForm, 'insertForm', collection);
 ```
 
 Example 2: Update quickForm
 
 ```
 <template name="updateForm">
-  {{> quickForm
-    autosave=true
+  {{#autoFormPersist
     collection=collection
     doc=doc
     id="updateForm"
-    omitFields=omitFields
     type="update"
   }}
+	  {{> afQuickField name="name"  placeholder="Name"}}
+  {{/autoFormPersist}}
 </template>
-
-AutoFormPersist(Template.updateForm, 'updateForm', collection, docId);
 ```
 
 ## Authors

@@ -9,93 +9,56 @@ import FormPersist from './form-persist';
 class AutoFormPersist {
   /*
     This class is interfaces with Meteor AutoForm forms.
-    It provides a variety of helpers and manages the
-    Blaze template lifecycle. Additionally, it acts a type
+    It provides a simple interface between AutoForm and the 
+    form persistence module. Additionally, it acts a type
     of plugin for AutoForm via the AutoForm hooks.
-    Form data is then transferred to the FormPersist module.
   */
-  constructor(template, formId, collection, docId) {
-    this.template = template;
+  constructor(formId, docId) {
     this.formId = formId;
-    this.collection = collection;
-    this._docId = docId;
+    this.docId = docId;
+    this.isLoadingStoreDoc = null;
     this.formPersist = FormPersist();
 
-    this.onCreated();
-    this.onDestroyed();
-    this.addHelpers();
     this.addHooks();
-    this.attachEvents();
   }
-  get docId() {
-    if (this._docId) return this._docId;
-    return this.formId;
+  get storeDocId() {
+    const { docId } = this;
+    if (!docId) return this.formId;
+    return `${this.formId}-${docId}`;
   }
-  get hasDocId() {
-    return !!this._docId;
+  getStoreDoc = async (cb) => {
+    this.isLoadingStoreDoc = true;
+    const storeDoc = await this.formPersist.getFormValues(this.storeDocId);
+    if (cb) cb(storeDoc);
+    this.isLoadingStoreDoc = false;
+    return storeDoc;
   }
-  onCreated = () => {
-    this.template.onCreated(() => {
-      this.setStoreDoc();
-    });
-  }
-  onDestroyed = () => {
-    this.template.onDestroyed(() => {
-      // cleanup Session keys
-      const keys = [this.docId, `${this.docId}-submit`];
-      keys.forEach(key => Session.set(key, null));
-    });
-  }
-  setStoreDoc = async () => {
-    const storeDoc = await this.formPersist.getFormValues(this.docId);
-    Session.set(this.docId, storeDoc);
-  }
-  getHelpers = () => {
-    if (this.hasDocId) {
-      return {
-        doc: () => {
-          const storeDoc = Session.get(this.docId);
-          const mongoDoc = this.collection.findOne(this.docId);
-          let afDoc = {};
-          if (storeDoc && storeDoc.updatedOn) {
-            if (new Date(storeDoc.updatedOn) > mongoDoc.updatedOn) afDoc = storeDoc;
-            else afDoc = mongoDoc;
-          } else afDoc = mongoDoc;
-          return _.omit(afDoc || {}, '_rev');
-        },
-        collection: () => this.collection,
-        omitFields: () => ['updatedOn'],
-      };
+  getFormDoc = (doc, storeDoc, type) => {
+    if (type === 'insert') {
+      return _.omit(storeDoc || {}, '_id', '_rev', 'updatedAt');
+    } else if (type === 'update') {
+      let afDoc;
+      if (storeDoc && storeDoc.updatedAt) {
+        if (new Date(storeDoc.updatedAt) > doc.updatedAt) afDoc = storeDoc;
+        else afDoc = doc;
+      } else afDoc = doc;
+      return _.omit({ ...(afDoc || {}), _id: doc._id }, '_rev');
     }
-    return {
-      doc: () => {
-        const doc = Session.get(this.docId);
-        return _.omit(doc || {}, '_id', '_rev', 'updatedOn');
-      },
-      collection: () => this.collection,
-      omitFields: () => ['updatedOn'],
-    };
-  }
-  addHelpers = () => {
-    const helpers = this.getHelpers();
-    this.template.helpers(helpers);
+    else {
+      throw new Error('Form type must be insert or update.');
+    }
   }
   getHooks = () => ({
+    before: {
+      update: (doc) => {
+        if (this.isLoadingStoreDoc === false) return doc;
+        return false;
+      },
+    },
     after: {
       insert: (e) => {
         if (!e) {
-          this.formPersist.remove(this.docId);
-          Session.set(this.docId, {});
-        }
-      },
-      update: (e) => {
-        const didSubmit = Session.get(`${this.docId}-submit`);
-        if (didSubmit) {
-          if (!e) {
-            this.formPersist.remove(this.docId);
-            Session.set(this.docId, {});
-          }
-          Session.set(`${this.docId}-submit`, false);
+          this.formPersist.remove(this.storeDocId);
         }
       },
     },
@@ -103,17 +66,6 @@ class AutoFormPersist {
   addHooks = () => {
     const hooks = this.getHooks();
     AutoForm.addHooks(this.formId, hooks);
-  }
-  attachEvents = () => {
-    this.template.events({
-      'keyup form': () => {
-        const doc = AutoForm.getFormValues(this.formId);
-        this.formPersist.upsert(this.docId, doc);
-      },
-      'submit form': () => {
-        if (this.hasDocId) Session.set(`${this.docId}-submit`, true);
-      },
-    });
   }
 }
 
