@@ -1,7 +1,6 @@
 /* eslint-disable no-underscore-dangle */
 
 import { AutoForm } from 'meteor/aldeed:autoform';
-import { Session } from 'meteor/session';
 import _ from 'underscore';
 
 import FormPersist from './form-persist';
@@ -9,7 +8,7 @@ import FormPersist from './form-persist';
 class AutoFormPersist {
   /*
     This class is interfaces with Meteor AutoForm forms.
-    It provides a simple interface between AutoForm and the 
+    It provides a simple interface between AutoForm and the
     form persistence module. Additionally, it acts a type
     of plugin for AutoForm via the AutoForm hooks.
   */
@@ -44,9 +43,7 @@ class AutoFormPersist {
       } else afDoc = doc;
       return _.omit({ ...(afDoc || {}), _id: doc._id }, '_rev');
     }
-    else {
-      throw new Error('Form type must be insert or update.');
-    }
+    throw new Error('Form type must be insert or update.');
   }
   getHooks = () => ({
     before: {
