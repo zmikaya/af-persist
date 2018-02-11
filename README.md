@@ -11,7 +11,7 @@ Since this is not an NPM package currently, you will need to manually install a 
 meteor npm install --save pouchdb-browser pouchdb-upsert underscore
 ```
 ```
-meteor add reactive-var session
+meteor add reactive-var
 ```
 
 ### Usage
@@ -21,6 +21,8 @@ Use the autoFormPersist component as follows:
 ```
 {{#autoFormPersist atts}}<body content>{{/autoFormPersist}}
 ```
+
+**Note that documents must have an "updatedAt" field in order to prioritize the remote database appropriately.**
 
 Some examples are below.
 
