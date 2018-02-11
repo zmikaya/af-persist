@@ -20,12 +20,14 @@ Template.autoFormPersist.events({
 Template.autoFormPersist.helpers({
   autoFormAtts() {
     const { doc, type } = this;
-    const { afPersist } = Template.instance();
-    const storeDoc = Template.instance().storeDoc.get();
+    const instance = Template.instance();
+    const { afPersist } = instance;
+    const storeDoc = instance.storeDoc.get();
     const formDoc = afPersist.getFormDoc(doc, storeDoc, type);
+    afPersist.submitFormDoc(instance);
     return {
       ...this,
-      doc: formDoc,
+      doc: afPersist.isLoadingStoreDoc ? {} : formDoc,
     };
   },
 });

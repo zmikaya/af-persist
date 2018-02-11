@@ -16,6 +16,7 @@ class AutoFormPersist {
     this.formId = formId;
     this.docId = docId;
     this.isLoadingStoreDoc = null;
+    this.didSubmit = false;
     this.formPersist = FormPersist();
 
     this.addHooks();
@@ -44,6 +45,16 @@ class AutoFormPersist {
       return _.omit({ ...(afDoc || {}), _id: doc._id }, '_rev');
     }
     throw new Error('Form type must be insert or update.');
+  }
+  submitFormDoc = (instance) => {
+    // Submit only once, when the formDoc is loaded
+    if (!this.isLoadingStoreDoc && !this.didSubmit) {
+      // Attempt to wait until AutoForm re-renders in order to submit
+      setTimeout(() => {
+        instance.$('form').submit();
+        this.didSubmit = true;
+      }, 500);
+    }
   }
   getHooks = () => ({
     before: {
