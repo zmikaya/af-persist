@@ -24,7 +24,7 @@ Template.autoFormPersist.helpers({
     const { afPersist } = instance;
     const storeDoc = instance.storeDoc.get();
     const formDoc = afPersist.getFormDoc(doc, storeDoc, type);
-    afPersist.submitFormDoc(instance);
+    afPersist.submitFormDoc(instance, formDoc);
     return {
       ...this,
       doc: afPersist.isLoadingStoreDoc ? {} : formDoc,

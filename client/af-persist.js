@@ -46,14 +46,14 @@ class AutoFormPersist {
     }
     throw new Error('Form type must be insert or update.');
   }
-  submitFormDoc = (instance) => {
+  submitFormDoc = (instance, formDoc) => {
     // Submit only once, when the formDoc is loaded
-    if (!this.isLoadingStoreDoc && !this.didSubmit) {
-      // Attempt to wait until AutoForm re-renders in order to submit
-      setTimeout(() => {
-        instance.$('form').submit();
-        this.didSubmit = true;
-      }, 500);
+    const formType = instance.data.type;
+    if (formType === 'update' && !this.isLoadingStoreDoc && !this.didSubmit) {
+      const { collection } = instance.data;
+      const docId = instance.data.doc._id;
+      collection.update(docId, { $set: formDoc });
+      this.didSubmit = true;
     }
   }
   getHooks = () => ({
