@@ -50,11 +50,17 @@ class AutoFormPersist {
     // Submit only once, when the formDoc is loaded
     const formType = instance.data.type;
     if (formType === 'update' && !this.isLoadingStoreDoc && !this.didSubmit) {
-      const { collection } = instance.data;
+      const collection = this.getCollection(instance.data.collection);
       const docId = instance.data.doc._id;
       collection.update(docId, { $set: formDoc });
       this.didSubmit = true;
     }
+  }
+  getCollection = (collection) => {
+    if (typeof collection === 'string') {
+      return window[collection];
+    }
+    return collection;
   }
   getHooks = () => ({
     before: {
