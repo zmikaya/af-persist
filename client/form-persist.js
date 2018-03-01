@@ -2,9 +2,11 @@
 
 import PouchDB from 'pouchdb-browser';
 import PouchDBUpsert from 'pouchdb-upsert';
+import PouchDBWebSQL from 'pouchdb-adapter-websql';
 import _ from 'underscore';
 
 PouchDB.plugin(PouchDBUpsert);
+PouchDB.plugin(PouchDBWebSQL);
 
 class FormPersist {
   /*  This class acts as a module to manage form persistence.
@@ -13,7 +15,15 @@ class FormPersist {
   */
   constructor(dbname) {
     this.dbname = dbname || 'FormPersist';
-    this.db = new PouchDB(this.dbname);
+    this.db = this.getDB();
+  }
+  getDB = () => {
+    const ua = window.navigator.userAgent;
+    const iOS = !!ua.match(/iPad/i) || !!ua.match(/iPhone/i);
+    const webkit = !!ua.match(/WebKit/i);
+    const iOSSafari = iOS && webkit && !ua.match(/CriOS/i);
+    if (iOSSafari) return new PouchDB(this.dbname, { adapter: 'websql' });
+    return new PouchDB(this.dbname);
   }
   getFormValues = async (docId) => {
     try {
@@ -21,6 +31,7 @@ class FormPersist {
       return res || {};
     } catch (e) {
       //
+      console.log('get err'. e);
     }
     return {};
   }
@@ -32,6 +43,7 @@ class FormPersist {
       );
     } catch (e) {
       //
+      console.log('err', e);
     }
   }, 500)
   remove = async (docId) => {
